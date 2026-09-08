@@ -1,0 +1,19 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "i2s_capture.c"
+        "mfcc.c"
+        "kws_engine.c"
+        "trigger_logic.c"
+        "ws_stream.c"
+    INCLUDE_DIRS
+        "."
+    REQUIRES
+        driver
+        esp_wifi
+        esp_event
+        nvs_flash
+        esp_http_client
+        esp_timer
+        esp_netif
+)
