@@ -1,0 +1,53 @@
+# ==============================================================================
+# AGNI-ASR — cloud service configuration (SIH-26172, ISRO Voice Activator handover)
+# All values can be overridden by environment variables at container start.
+# ==============================================================================
+
+server:
+  host: "0.0.0.0"                 # bind everywhere: spot VM / laptop / docker
+  port: 8000
+  api_token: "dev-token"          # override with env AGNI_API_TOKEN in real deployments
+
+asr:
+  model_size: "base"              # tiny | base | small  (small = production; base = CPU demo)
+  device: "auto"                  # auto | cpu | cuda     (auto: cuda if CTranslate2 finds it)
+  compute_type: "auto"            # auto | int8 | float16
+  language: "en"                  # command channel is English per proposal; null = autodetect
+  beam_size: 5
+  vad_filter: true                # silero VAD gating inside faster-whisper
+  no_speech_threshold: 0.6        # Whisper no-speech prob gate (hallucination defense)
+
+verifier:                          # Model C — cloud-side wake-word co-verification
+  enabled: true
+  edge_model_path: "../../models/tflite/voice_activator_int8.tflite"   # repo-root models/ (frozen INT8 edge encoder)
+  wake_span_end_s: 1.0            # the wake word lives in the pre-roll (first ~1.0s of payload)
+  cosine_threshold: 0.70          # cloud veto threshold (edge fires at 0.88; cloud just vetoes junk)
+  vfs_degraded: "warn"            # warn | refuse   (what to do when prototype/model missing)
+
+intent:
+  grammar_path: "commands.yaml"   # relative to this file's directory
+  freeform_fallback: true         # unknown structure -> {"type": "freeform"} instead of null
+
+command_model:                     # Model A — fast path (Session 3)
+  enabled: false                   # true once training/train_conformer_ctc.py produced a ckpt
+  ckpt_path: "../runs/conformer_ctc/conformer_ctc.pt"
+  grammar_decode: true             # constrain with commands.yaml trie (GrammarDFA)
+
+partials:                          # /ws/asr streaming behavior
+  partial_every_s: 0.4
+  silence_end_ms: 600
+  max_utt_s: 8.0
+
+mqtt:                              # used by mqtt_bridge.py
+  enabled: false                  # flip true (or AGNI_MQTT_ENABLED=1) on real deployments
+  host: "localhost"
+  port: 1883
+  username: ""                    # set for TLS deployments
+  password: ""
+  topic_audio: "agni/+/audio"     # ESP32 nodes publish payloads here
+  topic_intent: "agni/{device}/intent"
+  reuse_gateway: true             # run ASR in-process (single container) rather than RPC
+
+limits:
+  max_payload_s: 8.0              # reject pathological uploads (>8 s) early
+  max_upload_bytes: 2000000       # raw JSON guard

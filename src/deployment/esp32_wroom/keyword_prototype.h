@@ -1,0 +1,22 @@
+/*
+ * Auto-generated Keyword Prototype Header
+ * SIH Problem Statement 26172
+ * Keyword: CABLE
+ * Embedding Dimension: 32
+ * Hypersphere Normalized: True (||p||_2 = 1.0)
+ */
+
+#ifndef KEYWORD_PROTOTYPE_H_
+#define KEYWORD_PROTOTYPE_H_
+
+#define ENROLLED_KEYWORD_NAME "CABLE"
+#define KEYWORD_PROTOTYPE_DIM 32
+#define EMBEDDING_DIMENSION KEYWORD_PROTOTYPE_DIM
+#define ENROLLED_KEYWORD_PROTOTYPE KEYWORD_PROTOTYPE
+
+// L2-normalized prototype vector centroid on 32-D unit hypersphere
+static const float KEYWORD_PROTOTYPE[KEYWORD_PROTOTYPE_DIM] = {
+    0.1708893f, -0.1101181f, -0.0275436f, 0.2507896f, 0.0826433f, 0.1128634f, -0.2424269f, -0.1240914f, -0.0524697f, 0.2562225f, -0.3004894f, -0.4355752f, -0.2700978f, -0.1182976f, -0.1184584f, 0.0579535f, -0.0687375f, 0.2012335f, -0.0496105f, 0.4547446f, -0.0992922f, 0.1239297f, 0.0661946f, 0.1047688f, 0.0551556f, 0.0662053f, 0.0412591f, -0.0826630f, -0.0936185f, -0.0883429f, 0.1104241f, -0.0935193f
+};
+
+#endif // KEYWORD_PROTOTYPE_H_

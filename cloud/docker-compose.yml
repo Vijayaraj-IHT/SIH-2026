@@ -1,0 +1,31 @@
+# AGNI-ASR single-command stack:  docker compose up -d
+# Runs on spot-GPU VM (finals demo) AND CPU laptop (offline ground-station demo).
+services:
+  gateway:
+    build:
+      context: ..           # repo root so Dockerfile can see cloud/ + models/
+      dockerfile: cloud/serving/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      AGNI_API_TOKEN: ${AGNI_API_TOKEN:-dev-token}
+      AGNI_MODEL_SIZE: ${AGNI_MODEL_SIZE:-base}      # set 'small' on the GPU VM
+      AGNI_MQTT_ENABLED: "true"
+      AGNI_MQTT_HOST: mqtt
+    volumes:
+      - ../models/tflite:/edge-models:ro              # frozen INT8 co-verifier encoder
+      - hf-cache:/root/.cache/huggingface
+    depends_on: [mqtt]
+    restart: unless-stopped
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"     # plain dev broker; TLS (8883) profile added for finals
+      - "9001:9001"
+    volumes:
+      - ./serving/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+volumes:
+  hf-cache:

@@ -1,0 +1,21 @@
+# ---- AGNI-ASR training environment (Session 2) ----
+# Install AFTER `pip install -r requirements.txt`
+#
+# CPU-only machine:   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# CUDA machine:       pip install torch            (defaults to CUDA build)
+# then:               pip install -r requirements-train.txt
+
+torch>=2.2
+transformers>=4.44
+peft>=0.12               # LoRA adapters for Whisper
+accelerate>=0.33
+datasets>=2.20
+evaluate>=0.4
+jiwer>=3.0               # WER/CER
+scipy>=1.11              # augmentation filters
+tqdm>=4.66
+soundfile>=0.12.1
+PyYAML>=6.0
+numpy>=1.26
+# wandb                  # optional experiment tracking (uncomment on the VM)
+# piper-tts==1.2.0       # optional: on-VM corpus TTS synthesis (MIT-licensed voices)

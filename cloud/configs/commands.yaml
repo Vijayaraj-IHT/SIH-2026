@@ -1,0 +1,50 @@
+# ==============================================================================
+# AGNI-ASR command grammar — SINGLE SOURCE OF TRUTH for:
+#   1. Session 1: runtime intent routing (intent_router.py)
+#   2. Session 2: TTS synthetic command-corpus generation (data/build_command_corpus.py)
+#   3. Session 3: WFST grammar compilation for the streaming Conformer
+# Keep templates <= ~300. Freeform path absorbs everything else by design.
+# ==============================================================================
+
+enrolled_keywords: [agni, vayu, jump, cable, helios, zora]   # stripped from transcript head if spoken
+
+verbs:
+  read:      [read, get, report, show, tell]
+  arm:       [arm]
+  disarm:    [disarm]
+  deploy:    [deploy, extend]
+  stow:      [stow, retract]
+  abort:     [abort, stop, halt, cancel]
+  calibrate: [calibrate, tune]   # NB: 'zero' would collide with number-word normalization
+  switch:    [switch, change]
+  set:       [set]
+
+subsystems:                       # canonical name : spoken aliases
+  telemetry:    [telemetry]
+  antenna:      [antenna]
+  payload:      [payload]
+  battery:      [battery]
+  thruster:     [thruster]
+  solar_panel:  [solar panel, solar-panel, panels]
+  heater:       [heater]
+  camera:       [camera]
+  transponder:  [transponder]
+  beacon:       [beacon]
+  recorder:     [recorder]
+
+modes: [safe, sun, nadir, science, idle, transmit, silent]
+
+templates:                        # used by corpus generator + documentation
+  - "{verb} {subsystem}"
+  - "{verb} {subsystem} channel {num}"
+  - "switch {subsystem} to {mode} mode"
+  - "set {subsystem} voltage to {num} point {num}"
+  - "calibrate {subsystem}"
+  - "abort {subsystem}"
+
+examples:
+  - "agni read telemetry channel five"
+  - "vayu deploy the solar panel"
+  - "jump abort payload"
+  - "cable switch transponder to silent mode"
+  - "set heater voltage to three point three"

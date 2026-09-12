@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGNI-ASR · SIH-26172 Command Console</title>
+<style>
+  :root{
+    --bg:#070b16; --panel:#0e1526; --panel2:#121c33; --line:#1f2b4d;
+    --txt:#e6ecf5; --dim:#8fa0c4; --acc:#ff7a1a; --acc2:#2bb3ff;
+    --ok:#33d17a; --warn:#ffc93c; --bad:#ff5c5c; --mono:ui-monospace,'Cascadia Mono',Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);
+  font:14px/1.5 'Segoe UI',system-ui,sans-serif}
+  .wrap{max-width:1060px;margin:0 auto;padding:18px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  h1{font-size:19px;margin:0;letter-spacing:.5px}
+  h1 b{color:var(--acc)} h1 span{color:var(--dim);font-weight:400;font-size:12px}
+  .pill{margin-left:auto;font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;
+        border:1px solid var(--line);color:var(--dim)}
+  .pill.up{color:var(--ok);border-color:var(--ok)} .pill.down{color:var(--bad);border-color:var(--bad)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin:0 0 10px}
+  details.conn summary{cursor:pointer;color:var(--dim);font-size:13px;list-style:none}
+  .grid{display:grid;gap:12px} .g2{grid-template-columns:1fr 1fr} @media(max-width:860px){.g2{grid-template-columns:1fr}}
+  label{display:block;font-size:11px;color:var(--dim);margin:8px 0 3px;text-transform:uppercase;letter-spacing:.8px}
+  input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+      border-radius:6px;padding:7px 9px;width:100%;font-family:var(--mono);font-size:13px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .row>*{flex:0 1 auto}
+  button{background:var(--acc);border:0;color:#14100a;font-weight:600;border-radius:8px;
+      padding:9px 16px;font-size:14px;cursor:pointer}
+  button.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  button.danger{background:var(--bad);color:#fff}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  canvas{width:100%;display:block;background:#050810;border:1px solid var(--line);border-radius:8px}
+  #wave{height:110px} #lat{height:74px}
+  .big{font-size:21px;font-family:var(--mono);min-height:56px;color:var(--txt);word-break:break-word}
+  .big em{color:var(--dim);font-style:normal}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:6px;background:var(--panel2);
+      border:1px solid var(--line)}
+  .chip b{color:var(--acc2);font-weight:600;margin-left:4px}
+  .badge{font-family:var(--mono);font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;text-transform:uppercase}
+  .b-ok{background:rgba(51,209,122,.12);color:var(--ok);border:1px solid var(--ok)}
+  .b-warn{background:rgba(255,201,60,.1);color:var(--warn);border:1px solid var(--warn)}
+  .b-bad{background:rgba(255,92,92,.12);color:var(--bad);border:1px solid var(--bad)}
+  .b-dim{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
+  .ticker{font-family:var(--mono);font-size:13px;min-height:88px}
+  .ticker div{padding:2px 0;color:var(--acc2);opacity:.35}.ticker div:last-child{opacity:1;color:#ffd9a8}
+  .ticker .fin{color:var(--ok);opacity:.9}
+  #log{font-family:var(--mono);font-size:11px;height:170px;overflow-y:auto;color:var(--dim);white-space:pre-wrap}
+  #log .e-ok{color:var(--ok)} #log .e-warn{color:var(--warn)} #log .e-bad{color:var(--bad)} #log .e-acc{color:var(--acc)}
+  .foot{color:var(--dim);font-size:11px;margin-top:8px;font-family:var(--mono)}
+  table.seg{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-top:8px}
+  .seg td{padding:3px 6px;border-top:1px solid var(--line);color:var(--dim)}
+  .kbd{border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AGNI·ASR <span>// SIH-26172 ISRO Voice Activator — Command Console</span></h1>
+    <span id="netpill" class="pill down">WS: offline</span>
+    <span id="healthpill" class="pill">health: …</span>
+  </header>
+
+  <div class="card">
+    <details class="conn">
+      <summary>▸ Connection & payload settings</summary>
+      <div class="grid g2" style="margin-top:10px">
+        <div><label>Gateway host</label><input id="host" value="localhost:8000"></div>
+        <div><label>API token (X-API-Key)</label><input id="token" value="dev-token" type="password"></div>
+        <div><label>Enrolled keyword</label>
+          <select id="keyword"><option value="">(none)</option>
+            <option>agni</option><option>vayu</option><option selected>jump</option>
+            <option>cable</option><option>helios</option><option>zora</option></select></div>
+        <div><label>Prototype (32-D, S³¹)</label>
+          <select id="protoMode"><option value="none">not sent</option>
+            <option value="random" selected>random unit vector (dev)</option>
+            <option value="paste">paste JSON array</option></select></div>
+      </div>
+      <div id="protoWrap" style="display:none"><label>prototype json [32 floats]</label>
+        <textarea id="protoJson" rows="2" placeholder='[-0.04, 0.18, ...]'></textarea></div>
+      <div style="margin-top:10px" class="row">
+        <button id="connectBtn" class="ghost">Connect</button>
+        <button id="disconnectBtn" class="ghost" disabled>Disconnect</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Live audio → gateway <span id="srNote" class="foot" style="display:inline"></span></h2>
+    <canvas id="wave"></canvas>
+    <div class="row" style="margin-top:10px">
+      <button id="micBtn">🎙 Start mic</button>
+      <button id="stopBtn" class="danger" disabled>■ Stop</button>
+      <button id="fileBtn" class="ghost">📁 Stream WAV file</button>
+      <input type="file" id="filePick" accept=".wav,.flac" hidden>
+      <button id="restBtn" class="ghost">📤 REST one-shot</button>
+      <input type="file" id="restPick" accept=".wav,.flac" hidden>
+      <button id="finBtn" class="ghost" disabled>⏹ Finalize utterance</button>
+    </div>
+    <div class="foot">streams 16 kHz PCM16 @ 400 ms frames · VAD auto-finalizes after ~0.6 s silence ·
+      or press <span class="kbd">finalize</span> for the full verifier+intent result ·
+      <span class="kbd">REST one-shot</span> sends a single file over HTTP</div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card"><h2>Partial ticker (command model)</h2><div class="ticker" id="ticker">
+      <div><em>waiting for speech…</em></div></div></div>
+    <div class="card"><h2>Last result</h2>
+      <div class="big" id="transcript"><em>—</em></div>
+      <div class="chips" id="chips"></div>
+      <div id="segs"></div>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card"><h2>Latency (ms) — asr / total</h2><canvas id="lat"></canvas>
+      <div class="foot" id="latstats">no runs yet</div></div>
+    <div class="card"><h2>Event log</h2><div id="log"></div></div>
+  </div>
+  <div class="foot">AGNI-ASR gateway: POST <span class="kbd">/v1/transcribe</span> · WS
+    <span class="kbd">/ws/asr?token=</span> · dashboard served by the gateway at
+    <span class="kbd">GET /dashboard</span> · SIH-26172</div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const logEl = $("log"), tickerEl = $("ticker");
+function log(msg, cls=""){ const t=new Date().toLocaleTimeString();
+  logEl.innerHTML += `<div class="${cls}">[${t}] ${msg}</div>`; logEl.scrollTop=logEl.scrollHeight; }
+
+/* ---------- connection state ---------- */
+let ws=null, streaming=false;
+const state={ latAsr:[], latTotal:[], wave:new Float32Array(64000), wi:0 };
+
+function wsUrl(){ return `ws://${$("host").value}/ws/asr?token=${encodeURIComponent($("token").value)}`; }
+function httpUrl(){ return `http://${$("host").value}`; }
+
+async function refreshHealth(){
+  try{ const r=await fetch(httpUrl()+"/healthz");
+    const j=await r.json();
+    const hp=$("healthpill");
+    hp.textContent=`${j.model}/${j.device} · verifier: ${j.verifier}`;
+    hp.classList.add(j.verifier==="ready"?"up":"down");
+  }catch(e){ $("healthpill").textContent="health: unreachable"; }
+}
+
+function setNet(up){ const p=$("netpill");
+  p.textContent="WS: "+(up?"live":"offline"); p.classList.toggle("up",up); p.classList.toggle("down",!up);
+  $("connectBtn").disabled=up; $("disconnectBtn").disabled=!up; $("finBtn").disabled=!up; }
+
+async function connect(){
+  if(ws) return;
+  try{ ws=new WebSocket(wsUrl()); }catch(e){ log("WS url error: "+e,"e-bad"); return; }
+  ws.onopen=()=>{ setNet(true); log("WS connected → "+wsUrl(),"e-ok");
+    ws.send(JSON.stringify({keyword:$("keyword").value||null, prototype:buildPrototype()})); };
+  ws.onclose=ev=>{ setNet(false); log(`WS closed (code ${ev.code})`,"e-warn"); ws=null; stopAudio(); };
+  ws.onerror=()=>log("WS error","e-bad");
+  ws.onmessage=ev=>handleEvent(JSON.parse(ev.data));
+}
+function disconnect(){ if(ws){ ws.close(); ws=null; } stopAudio(); }
+
+function buildPrototype(){
+  const m=$("protoMode").value;
+  if(m==="none") return null;
+  if(m==="paste"){ try{ const a=JSON.parse($("protoJson").value);
+    if(Array.isArray(a)&&a.length===32) return a; log("prototype must be 32 floats — sending none","e-warn"); }catch(e){ log("prototype JSON invalid","e-warn"); }
+    return null; }
+  const r=new Float32Array(32).map(()=>Math.random()*2-1);
+  const n=Math.hypot(...r); return [...r].map(v=>+(v/n).toFixed(6));
+}
+
+/* ---------- event handling ---------- */
+function handleEvent(d){
+  if(d.type==="ack"){ log("ack: command_model="+d.command_model, d.command_model?"e-ok":"e-warn"); return; }
+  if(d.type==="partial"){ pushTicker(d.text||(d.note||"·"), false); logLatencyHint(d); return; }
+  if(d.type==="final"){ pushTicker("◼ final ("+d.reason+", "+d.audio_s+"s)", true); return; }
+  if(d.type==="result"){ renderResult(d); return; }
+  log("event: "+JSON.stringify(d).slice(0,140));
+}
+function pushTicker(text, fin){
+  if(tickerEl.children[0]&&tickerEl.children[0].firstChild&&tickerEl.children[0].firstChild.tagName==="EM")
+    tickerEl.innerHTML="";
+  const div=document.createElement("div"); div.className=fin?"fin":""; div.textContent=text;
+  tickerEl.appendChild(div);
+  while(tickerEl.children.length>6) tickerEl.removeChild(tickerEl.firstChild);
+}
+function logLatencyHint(){}
+
+/* ---------- result rendering ---------- */
+function intentBadge(t){
+  return t==="command"?"<span class='badge b-ok'>command</span>"
+       : t==="freeform"?"<span class='badge b-warn'>freeform</span>"
+       : t==="blocked" ?"<span class='badge b-bad'>blocked</span>"
+       : "<span class='badge b-dim'>null</span>";
+}
+function verifBadge(v){
+  if(!v||v.verified===null||v.verified===undefined)
+    return `<span class='badge b-dim'>verifier: skipped</span>`;
+  return v.verified
+    ? `<span class='badge b-ok'>verified ${v.cosine}</span>`
+    : `<span class='badge b-bad'>veto ${v.cosine}</span>`;
+}
+function renderResult(d){
+  $("transcript").innerHTML = d.transcript? escapeHtml(d.transcript) : "<em>(no speech)</em>";
+  const i=d.intent||{}; let chips=[intentBadge(i.type), verifBadge(d.verification)];
+  for(const k of ["action","subsystem","mode","channel","voltage","wake_keyword"])
+    if(i[k]!==undefined&&i[k]!==null) chips.push(`<span class=chip>${k}<b>${escapeHtml(""+i[k])}</b></span>`);
+  if(d.command) chips.push(`<span class=chip>fast-path<b>${escapeHtml(d.command.engine)}</b></span>`);
+  chips.push(`<span class=chip>asr<b>${d.timing.asr_ms} ms</b></span>`);
+  chips.push(`<span class=chip>total<b>${d.timing.total_ms} ms</b></span>`);
+  $("chips").innerHTML=chips.join(" ");
+  if(d.segments&&d.segments.length){
+    $("segs").innerHTML="<table class='seg'>"+d.segments.map(s=>
+      `<tr><td>${s.start}–${s.end}s</td><td>${escapeHtml(s.text)}</td><td>logp ${s.avg_logprob}</td></tr>`).join("")+"</table>";
+  } else $("segs").innerHTML="";
+  addLatency(d.timing.asr_ms, d.timing.total_ms);
+  log(`result: "${(d.transcript||"").slice(0,60)}" [${i.type||"null"}] total ${d.timing.total_ms} ms`,
+      i.type==="command"?"e-ok":i.type==="blocked"?"e-bad":"");
+}
+function escapeHtml(s){ return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------- latency plot ---------- */
+function addLatency(asr,total){ state.latAsr.push(asr); state.latTotal.push(total);
+  if(state.latAsr.length>40){ state.latAsr.shift(); state.latTotal.shift(); } drawLat(); }
+function drawLat(){
+  const c=$("lat"),ctx=c.getContext("2d"),W=c.width=c.offsetWidth,H=c.height=140;
+  ctx.clearRect(0,0,W,H);
+  const series=[{a:state.latTotal,col:"#ff7a1a"},{a:state.latAsr,col:"#2bb3ff"}];
+  const max=Math.max(300,...state.latTotal);
+  for(const s of series){ ctx.strokeStyle=s.col; ctx.lineWidth=1.6; ctx.beginPath();
+    s.a.forEach((v,i)=>{ const x=i/(Math.max(1,s.a.length-1))*(W-8)+4, y=H-8-(v/max)*(H-16);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke(); }
+  const n=state.latTotal.length;
+  $("latstats").textContent=n?`runs: ${n} · last total ${state.latTotal[n-1]} ms · avg total ${
+    Math.round(state.latTotal.reduce((a,b)=>a+b,0)/n)} ms · max scale ${max} ms`:"no runs yet";
+}
+
+/* ---------- wave meter ---------- */
+function drawWave(){
+  const c=$("wave"),ctx=c.getContext("2d"),W=c.width=c.offsetWidth,H=c.height=110;
+  ctx.clearRect(0,0,W,H); ctx.strokeStyle="#2bb3ff"; ctx.beginPath();
+  const w=state.wave; let peak=0;
+  for(let x=0;x<W;x++){ const i=Math.floor(x/W*w.length), v=w[i];
+    peak=Math.max(peak,Math.abs(v)); const y=H/2, amp=Math.max(1,v*H*0.46);
+    ctx.moveTo(x,y-amp); ctx.lineTo(x,y+amp); }
+  ctx.stroke();
+  ctx.fillStyle="#8fa0c4"; ctx.font="11px ui-monospace";
+  ctx.fillText("peak "+peak.toFixed(3)+(streaming?"  ● capturing":"  ○ idle"),8,14);
+  requestAnimationFrame(drawWave);
+}
+function ingestWave(f32){ for(const v of f32){ state.wave.copyWithin(0,1); state.wave[state.wave.length-1]=v; } }
+
+/* ---------- audio capture (mic + file) ---------- */
+let audioCtx, srcNode, workletNode, mediaStream, sendBuf=[];
+function pcm16(float32){ const out=new DataView(new ArrayBuffer(float32.length*2));
+  for(let i=0;i<float32.length;i++){ let v=Math.max(-1,Math.min(1,float32[i]));
+    out.setInt16(i*2, v<0?v*0x8000:v*0x7FFF, true); } return out.buffer; }
+function decimate(f32, inRate){ if(inRate===16000) return f32;
+  const r=16000/inRate, n=Math.floor(f32.length*r), o=new Float32Array(n);
+  for(let i=0;i<n;i++){ const p=i/r, j=Math.floor(p), f=p-j;
+    o[i]=(f32[j]||0)*(1-f)+(f32[j+1]||0)*f; } return o; }
+function feedSamples(f32){
+  ingestWave(f32); sendBuf.push(f32);
+  let total=sendBuf.reduce((a,b)=>a+b.length,0);
+  while(total>=6400){                                      // 400 ms @ 16 kHz
+    const out=new Float32Array(6400); let off=0;
+    while(off<6400){ const c=sendBuf[0], take=Math.min(c.length,6400-off);
+      out.set(c.subarray(0,take),off); off+=take;
+      sendBuf[0]=take<c.length?c.subarray(take):sendBuf.shift()||c.subarray(0,0); total-=take; }
+    if(ws&&ws.readyState===1) ws.send(pcm16(out));
+  }
+}
+const WORKLET=`
+class PCMForwarder extends AudioWorkletProcessor{
+  process(inputs){ const ch=inputs[0]&&inputs[0][0];
+    if(ch) this.port.postMessage(ch.slice(0)); return true; } }
+registerProcessor('pcm-forwarder', PCMForwarder);`;
+
+async function startMic(){
+  if(streaming) return;
+  if(!ws||ws.readyState!==1){ log("connect WS first","e-warn"); return; }
+  try{
+    mediaStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,
+      echoCancellation:true,noiseSuppression:true}});
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    $("srNote").textContent=` · ctx ${audioCtx.sampleRate} Hz`;
+    srcNode=audioCtx.createMediaStreamSource(mediaStream);
+    try{
+      const url=URL.createObjectURL(new Blob([WORKLET],{type:"application/javascript"}));
+      await audioCtx.audioWorklet.addModule(url);
+      workletNode=new AudioWorkletNode(audioCtx,"pcm-forwarder");
+      const rate=audioCtx.sampleRate;
+      workletNode.port.onmessage=ev=>feedSamples(decimate(ev.data,rate));
+      srcNode.connect(workletNode);
+      const mute=audioCtx.createGain(); mute.gain.value=0;
+      workletNode.connect(mute).connect(audioCtx.destination);
+    }catch(werr){
+      log("AudioWorklet unavailable → ScriptProcessor fallback","e-warn");
+      const sp=audioCtx.createScriptProcessor(4096,1,1), rate=audioCtx.sampleRate;
+      sp.onaudioprocess=e=>feedSamples(decimate(e.inputBuffer.getChannelData(0),rate));
+      srcNode.connect(sp); sp.connect(audioCtx.destination); workletNode=sp;
+    }
+    streaming=true; $("micBtn").disabled=true; $("stopBtn").disabled=false;
+    log("mic live — speak a command","e-acc");
+  }catch(err){ log("mic failed: "+err.message+" (use WAV streaming instead)","e-bad"); }
+}
+function stopAudio(){
+  streaming=false; try{mediaStream&&mediaStream.getTracks().forEach(t=>t.stop());}catch(e){}
+  try{audioCtx&&audioCtx.close();}catch(e){} audioCtx=null; workletNode=null;
+  $("micBtn").disabled=false; $("stopBtn").disabled=true;
+}
+
+async function streamFile(file){
+  if(!ws||ws.readyState!==1){ log("connect WS first","e-warn"); return; }
+  try{
+    const raw=await file.arrayBuffer();
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    const buf=await ac.decodeAudioData(raw);
+    const rate=buf.sampleRate, ch=buf.getChannelData(0);
+    log(`streaming ${file.name}: ${(buf.duration).toFixed(2)} s @ ${rate} Hz`,"e-acc");
+    $("stopBtn").disabled=false; streaming=true;
+    let pos=0; const step=6400;
+    (function pump(){
+      if(!streaming) return;
+      const end=Math.min(pos+step* (rate/16000), ch.length);
+      feedSamples(decimate(ch.subarray(pos,end), rate)); pos=end;
+      if(pos<ch.length) setTimeout(pump, 380);
+      else{ log("file streamed — finalize when ready","e-acc"); streaming=false;
+        $("stopBtn").disabled=true; }
+    })();
+    ac.close&&setTimeout(()=>ac.close(),60000);
+  }catch(err){ log("file decode failed: "+err.message,"e-bad"); }
+}
+
+/* ---------- REST one-shot ---------- */
+async function restShot(file){
+  const meta={keyword:$("keyword").value||null, prototype:buildPrototype()};
+  const fd=new FormData(); fd.append("file",file); fd.append("meta",JSON.stringify(meta));
+  const t0=performance.now();
+  try{
+    const r=await fetch(httpUrl()+"/v1/transcribe/upload",
+      {method:"POST",headers:{"X-API-Key":$("token").value},body:fd});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.detail||("HTTP "+r.status));
+    logLatencyHint(); renderResult(j);
+    log(`REST one-shot served in ${Math.round(performance.now()-t0)} ms`,"e-ok");
+  }catch(e){ log("REST failed: "+e.message,"e-bad"); }
+}
+
+/* ---------- shell ---------- */
+$("connectBtn").onclick=connect; $("disconnectBtn").onclick=disconnect;
+$("micBtn").onclick=startMic; $("stopBtn").onclick=()=>stopAudio();
+$("fileBtn").onclick=()=>$("filePick").click();
+$("filePick").onchange=e=>{ const f=e.target.files[0]; if(f) streamFile(f); e.target.value=""; };
+$("finBtn").onclick=()=>{ if(ws&&ws.readyState===1){ ws.send(JSON.stringify({finalize:true}));
+  log("finalize requested","e-acc"); } };
+$("restBtn").onclick=()=>$("restPick").click();
+$("restPick").onchange=e=>{ const f=e.target.files[0]; if(f) restShot(f); e.target.value=""; };
+$("protoMode").onchange=e=>$("protoWrap").style.display=e.target.value==="paste"?"block":"none";
+refreshHealth(); setInterval(refreshHealth,15000); drawWave();
+log("dashboard ready — press Connect, then Start mic (or 📁 stream / 📤 REST one-shot).");
+setNet(false);
+</script>
+</body>
+</html>

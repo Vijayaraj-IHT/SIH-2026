@@ -1,0 +1,15 @@
+# ---- AGNI-ASR cloud service (Session 1: zero-training pipeline) ----
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+pydantic>=2.6
+PyYAML>=6.0
+numpy>=1.26
+soundfile>=0.12.1          # WAV decode (bundles libsndfile)
+faster-whisper>=1.0.3      # Model B zero-shot ASR (CTranslate2; CPU INT8 / GPU FP16 auto)
+paho-mqtt>=1.6.1           # MQTT bridge for ESP32 handover (v2 client API compatible code)
+websockets>=12.0           # client-side test tooling
+ai-edge-litert>=1.2; python_version >= "3.11"       # co-verifier TFLite interpreter (modern)
+# tflite-runtime>=2.16     # alternative interpreter (py<=3.12); any one backend suffices
+# jiwer                    # eval harness (Session 2)
+# torch, transformers, peft# LoRA fine-tuning (Session 2)
